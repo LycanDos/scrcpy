@@ -2,11 +2,13 @@
 
 #include <assert.h>
 #include <SDL2/SDL_keycode.h>
+#include <stdio.h>
 
 #include "input_events.h"
 #include "screen.h"
 #include "shortcut_mod.h"
 #include "util/log.h"
+#include "util/thread.h"
 
 void
 sc_input_manager_init(struct sc_input_manager *im,
@@ -362,6 +364,18 @@ inverse_point(struct sc_point point, struct sc_size size,
     return point;
 }
 
+static int
+run_window_restore(void *data) {
+    struct sc_screen *screen = data;
+
+    getchar();
+
+    sc_screen_show_window(screen);
+    printf("Window resumed\n");
+
+    return 0;
+}
+
 static void
 sc_input_manager_process_key(struct sc_input_manager *im,
                              const SDL_KeyboardEvent *event) {
@@ -546,6 +560,21 @@ sc_input_manager_process_key(struct sc_input_manager *im,
                         && im->kp && im->kp->hid) {
                     // Only if the current keyboard is hid
                     open_hard_keyboard_settings(im);
+                }
+                return;
+            case SDLK_d:
+                if (!shift && !repeat && down && !im->screen->hidden) {
+                    sc_screen_hide_window(im->screen);
+
+                    printf("Window hidden, press [Enter] to restore...\n");
+
+                    sc_thread thread;
+                    bool ok = sc_thread_create(&thread, run_window_restore, "scrcpy-hidden-screen", im->screen);
+                    if (!ok) {
+                        LOGE("Could not start window restore thread");
+                        sc_screen_show_window(im->screen);
+                        return;
+                    }
                 }
                 return;
         }

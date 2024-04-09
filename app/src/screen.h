@@ -62,6 +62,7 @@ struct sc_screen {
     bool fullscreen;
     bool maximized;
     bool minimized;
+    bool hidden;
 
     AVFrame *frame;
 
@@ -121,10 +122,15 @@ sc_screen_destroy(struct sc_screen *screen);
 //
 // It is used to hide the window immediately on closing without waiting for
 // screen_destroy()
+// It is also used for hide the window temporarly as a feature
 void
 sc_screen_hide_window(struct sc_screen *screen);
 
-// toggle the fullscreen mode
+// show the window
+void
+sc_screen_show_window(struct sc_screen *screen);
+
+// switch the fullscreen mode
 void
 sc_screen_toggle_fullscreen(struct sc_screen *screen);
 
